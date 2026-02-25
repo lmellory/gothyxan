@@ -1,0 +1,32 @@
+{
+  "name": "gothyxan",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "backend",
+    "web",
+    "mobile"
+  ],
+  "scripts": {
+    "dev": "concurrently -n backend,web,mobile -c cyan,magenta,green \"npm run dev:backend\" \"npm run dev:web\" \"npm run dev:mobile\"",
+    "dev:backend": "npm --workspace backend run start:dev",
+    "dev:web": "npm --workspace web run dev",
+    "dev:mobile": "npm --workspace mobile run start",
+    "build": "npm run build:backend && npm run build:web && npm run build:mobile",
+    "build:backend": "npm --workspace backend run build",
+    "build:web": "npm --workspace web run build",
+    "build:mobile": "npm --workspace mobile run build",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "format": "npm run format --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@babel/helpers": "^7.28.6",
+    "@babel/types": "^7.29.0",
+    "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "browserslist": "^4.28.1",
+    "caniuse-lite": "^1.0.30001770"
+  }
+}

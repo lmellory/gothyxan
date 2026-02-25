@@ -1,0 +1,44 @@
+﻿# Node
+node_modules/
+npm-debug.log*
+
+# Build outputs
+dist/
+.next/
+out/
+coverage/
+*.log
+*.runtime*.log
+watch*.log
+tmp_*.txt
+web.runtime*.log
+backend.runtime*.log
+mobile.runtime*.log
+telegram-bot.runtime*.log
+
+# Expo
+.mobile-cache/
+.mobile-web/
+.expo/
+mobile/.expo/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Env files
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Prisma
+backend/prisma/*.db
+backend/prisma/*.db-journal
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

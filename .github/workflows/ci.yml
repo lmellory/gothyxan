@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  node-stack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint --workspaces --if-present
+
+      - name: Backend Prisma Generate
+        run: npm --workspace backend run prisma:generate
+
+      - name: Backend Build
+        run: npm --workspace backend run build
+
+      - name: Backend Unit Tests
+        run: npm --workspace backend run test -- --passWithNoTests
+
+      - name: Web Build
+        run: npm --workspace web run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000
+
+      - name: Mobile Type Build
+        run: npm --workspace mobile run build
+
+      - name: Dependency Audit (non-blocking)
+        continue-on-error: true
+        run: npm audit --omit=dev
+
+  telegram-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Bot Dependencies
+        run: pip install -r telegram-bot/requirements.txt
+
+      - name: Validate Bot Syntax
+        run: python -m py_compile telegram-bot/bot.py telegram-bot/api_client.py telegram-bot/config.py telegram-bot/state.py

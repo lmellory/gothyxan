@@ -1,0 +1,107 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: gothyxan-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gothyxan
+    ports:
+      - "5432:5432"
+    volumes:
+      - gothyxan_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: gothyxan-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - gothyxan_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: gothyxan-backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      API_PORT: 4000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/gothyxan
+      JWT_ACCESS_SECRET: replace_with_min_32_char_secret_access
+      JWT_REFRESH_SECRET: replace_with_min_32_char_secret_refresh
+      JWT_ACCESS_EXPIRES: 15m
+      JWT_REFRESH_EXPIRES: 30d
+      CORS_ORIGIN: http://localhost:3000
+      EMAIL_FROM: no-reply@gothyxan.app
+      EMAIL_PROVIDER: console
+      OPENWEATHER_API_KEY: ""
+      ADMIN_EMAIL: admin@gothyxan.app
+      ADMIN_PASSWORD: ChangeMe123!
+      AFFILIATE_TAG: ${AFFILIATE_TAG:-}
+      REDIS_URL: redis://redis:6379
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/api/health >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    container_name: gothyxan-web
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000 >/dev/null 2>&1 || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+  telegram-bot:
+    build:
+      context: .
+      dockerfile: telegram-bot/Dockerfile
+    container_name: gothyxan-telegram-bot
+    restart: unless-stopped
+    environment:
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_BACKEND_URL: http://backend:4000
+      TELEGRAM_BACKEND_TIMEOUT: 10
+      TELEGRAM_BACKEND_BOT_SECRET: ${TELEGRAM_BACKEND_BOT_SECRET:-}
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  gothyxan_pg_data:
+  gothyxan_redis_data:

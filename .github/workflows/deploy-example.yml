@@ -1,0 +1,26 @@
+name: Deploy Example
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy-web-vercel:
+    runs-on: ubuntu-latest
+    if: ${{ false }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm --workspace web run build
+      - name: Deploy to Vercel
+        run: npx vercel --prod --token "${{ secrets.VERCEL_TOKEN }}"
+
+  deploy-backend-railway:
+    runs-on: ubuntu-latest
+    if: ${{ false }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy backend container to Railway
+        run: echo "Use Railway GitHub integration or railway up with RAILWAY_TOKEN secret."
